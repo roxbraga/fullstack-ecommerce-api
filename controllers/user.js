@@ -15,9 +15,9 @@ module.exports.registerUser = (req, res) => {
     }
 
     // Mobile number validation
-   if (!mobileNo || !/^\d+$/.test(mobileNo) || mobileNo.length < 10 || mobileNo.length > 15) {
-        return res.status(400).json({ error: "Mobile number invalid" });
-    }
+  if (!req.body.mobileNo || req.body.mobileNo.length !== 11 || isNaN(req.body.mobileNo)) {
+    return res.status(400).json({ error: "Mobile number invalid" });
+}
 
     // Password length validation
      if (!password || typeof password !== "string" || password.trim().length < 8) {
