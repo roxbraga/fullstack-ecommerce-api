@@ -12,6 +12,6 @@ router.get("/details", verify, userController.getProfile);
 router.patch("/update-password", verify, userController.updatePassword);
 
 // Admin Only Route
-router.patch("/:id/set-as-admin", verify, userController.adminUpdateUser);
+router.patch("/:id/set-as-admin", verify, userController.setAsAdmin);
 
 module.exports = router;
