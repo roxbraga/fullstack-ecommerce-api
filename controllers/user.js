@@ -7,8 +7,17 @@ const { errorHandler } = require('../auth');
 // REGISTER USER
 module.exports.registerUser = (req, res) => {
     if (!req.body.email.includes("@")){
-        return res.status(400).json({ error: "Invalid Email" });
+        return res.status(400).json({ error: "Email Invalid" });
     }
+
+    if (!mobileNo || mobileNo.length < 10 || mobileNo.length > 15) {
+        return res.status(400).json({ error: "Mobile number invalid" });
+    }
+
+    if (!password || password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
 
     let newUser = new User({
         firstName : req.body.firstName,
@@ -20,7 +29,7 @@ module.exports.registerUser = (req, res) => {
     });
 
     return newUser.save()
-    .then((result) => res.status(200).json({ message: "User registered successfully", user: result }))
+    .then((result) => res.status(201).json({ message: "Registered Successfully", user: result }))
     .catch(error => errorHandler(error, req, res));
 };
 
