@@ -23,7 +23,8 @@ const userSchema = new mongoose.Schema({
     },
     mobileNo: {
         type: String,
-        required: true
+        required: true,
+        default: false
     }
 });
 
