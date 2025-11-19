@@ -13,7 +13,7 @@ router.post("/", verify, verifyAdmin, productController.addProduct);
 router.get("/all", productController.getAllProducts);
 
 // Retrieve all active products (Protected)
-router.get("/active", verify, productController.getAllActiveProducts);
+router.get("/active", productController.getAllActiveProducts);
 
 // Retrieve single product
 router.get("/:productId", verify, productController.getProduct);

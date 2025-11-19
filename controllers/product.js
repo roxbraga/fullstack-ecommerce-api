@@ -57,11 +57,17 @@ module.exports.getAllActiveProducts = (req, res) => {
 
         if (result.length > 0) {
 
-            return res.status(200).send(result);
+            return res.status(200).json({
+            	success:true,
+            	product: result
+            });
 
         } else {
 
-            return res.status(404).send(false)
+            return res.status(404).json({
+            	success:false,
+            	product:[]
+            })
         }
     })
     .catch(error => errorHandler(error, req, res));
