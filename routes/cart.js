@@ -1,18 +1,18 @@
-// const express = require("express");
-// const router = express.Router();
-// const cartController = require("../controllers/cart");
-// const auth = require("../auth");
-// const { verify, verifyAdmin } = auth;
+const express = require("express");
+const router = express.Router();
+const cartController = require("../controllers/cart");
+const auth = require("../auth");
+const { verify, verifyAdmin } = auth;
 
 // // Public Routes
-// router.post("/", userController.registerUser);
-// router.post("/login", userController.loginUser);
 
-// // Authenticated User Routes
-// router.get("/details", verify, userController.getProfile);
-// router.patch("/update-password", verify, userController.updatePassword);
+// Retrieve User cart
+router.get('/get-cart', verify, cartController.getUserCart);
 
-// // Admin Only Route
-// router.patch("/:id/set-as-admin", verify, verifyAdmin, userController.setAsAdmin);
+// Add to Cart
+router.post('/add-to-cart', verify, cartController.addToCart);
 
-// module.exports = router;
+// Update Product Quantity
+router.patch('/update-cart-quantity', verify, cartController.updateCartQuantity);
+
+module.exports = router;

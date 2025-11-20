@@ -31,7 +31,7 @@ mongoose.connect(process.env.MONGODB_STRING);
 mongoose.connection.once('open', () => console.log('Now connected to MongoDB Atlas.'));
 
 app.use("/users", userRoutes);
-// app.use("/cart", cartRoutes);
+app.use("/cart", cartRoutes);
 // app.use("/order", orderRoutes);
 app.use("/products", productRoutes);
 
