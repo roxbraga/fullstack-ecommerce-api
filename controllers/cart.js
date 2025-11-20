@@ -2,24 +2,33 @@ const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const { errorHandler } = require('../auth');
 
-// Retrieve user cart
+// Helper function: populate cart items with product details using one DB query
+const populateCartItems = async (cartItems) => {
+    if (!cartItems || cartItems.length === 0) return [];
+
+    const productIds = cartItems.map(i => i.productId);
+    const products = await Product.find({ _id: { $in: productIds } }).lean();
+    const productMap = Object.fromEntries(products.map(p => [p._id.toString(), p]));
+
+    return cartItems.map(item => ({
+        _id: item._id,
+        productId: item.productId,
+        quantity: item.quantity,
+        subtotal: item.subtotal,
+        productDetails: productMap[item.productId.toString()] || null
+    }));
+};
+
+// Get user cart
 module.exports.getUserCart = async (req, res) => {
     try {
-        const cart = await Cart.findOne({ userId: req.user.id });
-
-        if (!cart) throw { status: 404, message: "No cart found for this user", code: "CART_NOT_FOUND" };
-
-        const updatedCartItems = [];
-        for (let item of cart.cartItems) {
-            const product = await Product.findById(item.productId);
-            updatedCartItems.push({
-                _id: item._id,
-                productId: item.productId,
-                quantity: item.quantity,
-                subtotal: item.subtotal,
-                productDetails: product ? product : null
-            });
+        let cart = await Cart.findOne({ userId: req.user.id });
+        if (!cart) {
+            // Return empty cart if user has no cart
+            cart = { cartItems: [], totalPrice: 0, _id: null, userId: req.user.id };
         }
+
+        const updatedCartItems = await populateCartItems(cart.cartItems);
 
         return res.json({
             message: "Cart retrieved successfully",
@@ -31,7 +40,6 @@ module.exports.getUserCart = async (req, res) => {
                 cartItems: updatedCartItems,
             }
         });
-
     } catch (err) {
         return errorHandler(err, req, res);
     }
@@ -48,12 +56,12 @@ module.exports.addToCart = async (req, res) => {
         let cart = await Cart.findOne({ userId: req.user.id });
         if (!cart) cart = new Cart({ userId: req.user.id, cartItems: [] });
 
-        const existingProduct = cart.cartItems.find(item => item.productId.toString() === productId);
+        const existingItem = cart.cartItems.find(i => i.productId.toString() === productId);
         let message = "";
 
-        if (existingProduct) {
-            existingProduct.quantity += Number(quantity);
-            existingProduct.subtotal = existingProduct.quantity * productData.price;
+        if (existingItem) {
+            existingItem.quantity += Number(quantity);
+            existingItem.subtotal = existingItem.quantity * productData.price;
             message = "Item quantity updated successfully";
         } else {
             cart.cartItems.push({
@@ -64,20 +72,10 @@ module.exports.addToCart = async (req, res) => {
             message = "Item added to cart successfully";
         }
 
-        cart.totalPrice = cart.cartItems.reduce((acc, item) => acc + item.subtotal, 0);
+        cart.totalPrice = cart.cartItems.reduce((acc, i) => acc + i.subtotal, 0);
         await cart.save();
 
-        const updatedCartItems = [];
-        for (let item of cart.cartItems) {
-            const product = await Product.findById(item.productId);
-            updatedCartItems.push({
-                _id: item._id,
-                productId: item.productId,
-                quantity: item.quantity,
-                subtotal: item.subtotal,
-                productDetails: product ? product : null
-            });
-        }
+        const updatedCartItems = await populateCartItems(cart.cartItems);
 
         return res.json({
             message,
@@ -116,17 +114,7 @@ module.exports.updateCartQuantity = async (req, res) => {
         cart.totalPrice = cart.cartItems.reduce((acc, i) => acc + i.subtotal, 0);
         await cart.save();
 
-        const updatedCartItems = [];
-        for (let i of cart.cartItems) {
-            const prod = await Product.findById(i.productId);
-            updatedCartItems.push({
-                _id: i._id,
-                productId: i.productId,
-                quantity: i.quantity,
-                subtotal: i.subtotal,
-                productDetails: prod ? prod : null
-            });
-        }
+        const updatedCartItems = await populateCartItems(cart.cartItems);
 
         return res.json({
             message: "Item quantity updated successfully",
