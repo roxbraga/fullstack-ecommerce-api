@@ -13,6 +13,7 @@ module.exports.getUserCart = async (req, res) => {
         for (let item of cart.cartItems) {
             const product = await Product.findById(item.productId);
             updatedCartItems.push({
+                _id: item._id,
                 productId: item.productId,
                 quantity: item.quantity,
                 subtotal: item.subtotal,
@@ -27,7 +28,7 @@ module.exports.getUserCart = async (req, res) => {
                 id: cart.id,
                 userId: cart.userId,
                 totalPrice: cart.totalPrice,
-                cartItems: updatedCartItems
+                cartItems: updatedCartItems,
             }
         });
 
@@ -70,6 +71,7 @@ module.exports.addToCart = async (req, res) => {
         for (let item of cart.cartItems) {
             const product = await Product.findById(item.productId);
             updatedCartItems.push({
+                _id: item._id,
                 productId: item.productId,
                 quantity: item.quantity,
                 subtotal: item.subtotal,
@@ -79,12 +81,13 @@ module.exports.addToCart = async (req, res) => {
 
         return res.json({
             message,
+            updated: true,
             cart: {
                 _id: cart._id,
                 id: cart.id,
                 userId: cart.userId,
                 totalPrice: cart.totalPrice,
-                cartItems: updatedCartItems
+                cartItems: updatedCartItems,
             }
         });
 
@@ -117,6 +120,7 @@ module.exports.updateCartQuantity = async (req, res) => {
         for (let i of cart.cartItems) {
             const prod = await Product.findById(i.productId);
             updatedCartItems.push({
+                _id: i._id,
                 productId: i.productId,
                 quantity: i.quantity,
                 subtotal: i.subtotal,
@@ -126,12 +130,13 @@ module.exports.updateCartQuantity = async (req, res) => {
 
         return res.json({
             message: "Item quantity updated successfully",
+            updated: true,
             cart: {
                 _id: cart._id,
                 id: cart.id,
                 userId: cart.userId,
                 totalPrice: cart.totalPrice,
-                cartItems: updatedCartItems
+                cartItems: updatedCartItems,
             }
         });
 
