@@ -50,28 +50,16 @@ module.exports.getAllProducts = (req, res) => {
 };
 
 	// Retrieve All active products
-module.exports.getAllActiveProducts = (req, res) => {
+module.exports.getAllActiveProducts = async (req, res) => {
+    try {
+        const products = await Product.find({ isActive: true }).lean();
 
-    Product.find({ isActive: true })
-    .then(result => {
+        // Always return an array
+        return res.status(200).json(products);
 
-        if (result.length > 0) {
-
-            return res.status(200).json({
-            	success:true,
-            	product: result
-            });
-
-        } else {
-
-            return res.status(404).json({
-            	success:false,
-            	product:[]
-            })
-        }
-    })
-    .catch(error => errorHandler(error, req, res));
-
+    } catch (error) {
+        return errorHandler(error, req, res);
+    }
 };
 
 
