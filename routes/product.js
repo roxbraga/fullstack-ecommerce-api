@@ -1,30 +1,25 @@
 const express = require("express");
 const router = express.Router();
 const productController = require("../controllers/product");
-const auth = require("../auth");
-const { verify, verifyAdmin } = auth;
+const { verify, verifyAdmin } = require("../auth");
 
-// Public Routes
+// Search routes
+router.get("/search-by-name", productController.searchByName);
+router.get("/search-by-price", productController.searchByPriceRange);
 
-// Create Product (Admin only)
-router.post("/", verify, verifyAdmin, productController.addProduct);
-
-// Retrieve all products (Public)
+// Get products
 router.get("/all", productController.getAllProducts);
-
-// Retrieve all active products (Protected)
 router.get("/active", productController.getAllActiveProducts);
 
-// Retrieve single product
-router.get("/:productId", verify, productController.getProduct);
+// Admin create product
+router.post("/", verify, verifyAdmin, productController.addProduct);
 
-// Update Product info (Admin only)
+// Admin product operations
 router.patch("/:productId/update", verify, verifyAdmin, productController.updateProduct);
-
-// Archive product (Admin only)
 router.patch("/:productId/archive", verify, verifyAdmin, productController.archiveProduct);
-
-// Activate product (Admin only)
 router.patch("/:productId/activate", verify, verifyAdmin, productController.activateProduct);
+
+// Single product (must be last)
+router.get("/:productId", verify, productController.getProduct);
 
 module.exports = router;
