@@ -77,7 +77,7 @@ module.exports.updateCartQuantity = async (req, res) => {
     }
 };
 
-// Remove item
+// Remove item - PATCH /cart/:productId/remove-from-cart
 module.exports.removeCartItem = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -108,8 +108,7 @@ module.exports.removeCartItem = async (req, res) => {
     }
 };
 
-
-// Clear entire cart
+// Clear entire cart - PUT /cart/clear-cart
 module.exports.clearCart = async (req, res) => {
     try {
         const userId = req.user.id;

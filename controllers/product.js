@@ -112,7 +112,7 @@ module.exports.archiveProduct = (req, res) => {
             if (!product.isActive) {
                 return res.status(200).send({
                     message: "Product already archived",
-                    product: result
+                    product: product
                 });
             }
 
@@ -158,36 +158,25 @@ module.exports.activateProduct = async (req, res) => {
 
 module.exports.searchByName = async (req, res) => {
     try {
-        const keyword = req.query.keyword || "";
-
-        const result = await Product.find({
-            name: { $regex: keyword, $options: "i" }
-        });
-
-        return res.status(200).json({
-            success: true,
-            results: result
-        });
+        const keyword = req.body.name || "";
+        const results = await Product.find({ name: { $regex: keyword, $options: "i" } });
+        return res.status(200).json({ success: true, results });
     } catch (err) {
-        return errorHandler(err, req, res);
+        return res.status(500).json({ success: false, message: err.message });
     }
 };
 
-
-module.exports.searchByPriceRange = async (req, res) => {
+module.exports.searchByPrice = async (req, res) => {
     try {
-        const min = Number(req.query.min) || 0;
-        const max = Number(req.query.max) || 999999;
+        const min = Number(req.body.minPrice) || 0;
+        const max = Number(req.body.maxPrice) || 999999;
 
-        const result = await Product.find({
+        const results = await Product.find({
             price: { $gte: min, $lte: max }
         });
 
-        return res.status(200).json({
-            success: true,
-            results: result
-        });
+        return res.status(200).json({ success: true, results });
     } catch (err) {
-        return errorHandler(err, req, res);
+        return res.status(500).json({ success: false, message: err.message });
     }
 };

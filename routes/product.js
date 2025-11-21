@@ -3,14 +3,15 @@ const router = express.Router();
 const productController = require("../controllers/product");
 const { verify, verifyAdmin } = require("../auth");
 
+// Public routes
 router.post("/search-by-name", productController.searchByName);
 router.post("/search-by-price", productController.searchByPrice);
 
 router.get("/all", productController.getAllProducts);
 router.get("/active", productController.getAllActiveProducts);
 
+// Admin protected routes
 router.post("/", verify, verifyAdmin, productController.addProduct);
-
 router.patch("/:productId/update", verify, verifyAdmin, productController.updateProduct);
 router.patch("/:productId/archive", verify, verifyAdmin, productController.archiveProduct);
 router.patch("/:productId/activate", verify, verifyAdmin, productController.activateProduct);
