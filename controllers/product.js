@@ -34,24 +34,11 @@ module.exports.addProduct = async (req, res) => {
 
 // Retrieve all products
 module.exports.getAllProducts = (req, res) => {
-
-    return Product.find({})
-    .then(result => {
-
-        if(result.length > 0) {
-
-            return res.status(200).send(result);
-
-        } else {
-
-            return res.status(403).send({
-                auth: "Failed",
-                message : "Action Forbidden"
-            });
-        }
-    })
-    .catch(error => errorHandler(error, req, res));
-
+    Product.find({})
+        .then(result => {
+            return res.status(200).send(result); 
+        })
+        .catch(error => errorHandler(error, req, res));
 };
 
 // Retrieve all active products (already async)
@@ -62,8 +49,7 @@ module.exports.getAllActiveProducts = async (req, res) => {
     } catch (error) {
         return errorHandler(error, req, res);
     }
-};
-
+}
 
 // Retrieve single product
 module.exports.getProduct = async (req, res) => {
