@@ -33,25 +33,13 @@ module.exports.addProduct = async (req, res) => {
 
 
 // Retrieve all products
-module.exports.getAllProducts = (req, res) => {
-
-    return Product.find({})
-    .then(result => {
-
-       if(result.length > 0) {
-
-            return res.status(200).send(result);
-
-       } else {
-
-            return res.status(403).send({
-               auth: "Failed",
-               message : "Action Forbidden"
-           });
-        }
-   })
-    .catch(error => errorHandler(error, req, res));
-
+module.exports.getAllProducts = async (req, res) => {
+    try {
+        const products = await Product.find({});
+        return res.status(200).json(products); 
+    }   catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
 };
 
 

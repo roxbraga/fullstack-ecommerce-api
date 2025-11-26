@@ -33,6 +33,7 @@ module.exports.verify = (req, res, next) => {
 
 
 
+
 // Admin check middleware
 module.exports.verifyAdmin = (req, res, next) => {
     if (req.user.isAdmin) {
