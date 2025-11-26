@@ -34,10 +34,13 @@ module.exports.addProduct = async (req, res) => {
 
 // Retrieve all products
 module.exports.getAllProducts = async (req, res) => {
+    if (!req.user?.isAdmin) {
+        return res.status(403).json({ message: "Action Forbidden" });
+    }
     try {
         const products = await Product.find({});
         return res.status(200).json(products); 
-    }   catch (error) {
+    } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 };
