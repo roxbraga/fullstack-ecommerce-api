@@ -25,11 +25,11 @@ module.exports.verify = (req, res, next) => {
     });
 };
 
-// Admin check middleware
-module.exports.verifyAdmin = (req, res, next) => {
-    if (req.user.isAdmin) return next();
-    return res.status(403).json({ auth: "Failed", message: "Action Forbidden" });
-};
+// // Admin check middleware
+// module.exports.verifyAdmin = (req, res, next) => {
+//     if (req.user.isAdmin) return next();
+//     return res.status(403).json({ auth: "Failed", message: "Action Forbidden" });
+// };
 
 // Error handler middleware
 module.exports.errorHandler = (err, req, res, next) => {
