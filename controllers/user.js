@@ -29,7 +29,7 @@ module.exports.registerUser = async (req, res) => {
             lastName,
             email,
             password: bcrypt.hashSync(password, 10),
-            isAdmin: isAdmin || false,
+            isAdmin:  false,
             mobileNo
         });
 
