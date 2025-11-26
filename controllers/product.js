@@ -1,137 +1,195 @@
 const Product = require("../models/Product");
-const { errorHandler } = require("../auth");
+const { errorHandler } = require('../auth');
+const auth = require("../auth");
 
-// Create a new product (Admin)
+
+// Creating Product
 module.exports.addProduct = async (req, res) => {
     try {
         const { name, description, price } = req.body;
 
         const existingProduct = await Product.findOne({ name });
         if (existingProduct) {
-            return res.status(409).json({ message: "Product already exists" });
+            return res.status(409).send({ message: "Product already exists" });
         }
 
-        const newProduct = new Product({ name, description, price });
+        const newProduct = new Product({
+            name,
+            description,
+            price
+        });
+
         const result = await newProduct.save();
 
-        return res.status(201).json({ success: true, product: result });
+        return res.status(201).send({
+            success: true,
+            product: result
+        });
 
     } catch (error) {
         return errorHandler(error, req, res);
     }
 };
 
-// Retrieve all products (Admin only)
+
+// Retrieve all products
 module.exports.getAllProducts = async (req, res) => {
     if (!req.user?.isAdmin) {
         return res.status(403).json({ message: "Action Forbidden" });
     }
     try {
         const products = await Product.find({});
-        return res.status(200).json({ products });
+        return res.status(200).json(products); 
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 };
 
-// Retrieve all active products (Public)
+
+// Retrieve all active products (already async)
 module.exports.getAllActiveProducts = async (req, res) => {
     try {
         const products = await Product.find({ isActive: true }).lean();
-        return res.status(200).json({ products });
+        return res.status(200).json(products);
     } catch (error) {
         return errorHandler(error, req, res);
     }
-};
+}
 
 // Retrieve single product
 module.exports.getProduct = async (req, res) => {
     try {
         const product = await Product.findById(req.params.productId);
-        if (!product) return res.status(404).json({ message: "Product not found" });
 
-        return res.status(200).json({ product });
+        if (product) return res.status(200).send(product);
+
+        return res.status(404).send(false);
+
     } catch (error) {
         return errorHandler(error, req, res);
     }
 };
 
-// Update product (Admin)
+
+// Update Product info
 module.exports.updateProduct = async (req, res) => {
     try {
-        const updatedData = {
+        const updatedProduct = {
             name: req.body.name,
             description: req.body.description,
             price: req.body.price
         };
 
-        const product = await Product.findByIdAndUpdate(req.params.productId, updatedData, { new: true });
-        if (!product) return res.status(404).json({ message: "Product not found" });
+        const product = await Product.findByIdAndUpdate(
+            req.params.productId,
+            updatedProduct
+        );
 
-        return res.status(200).json({ success: true, message: "Product updated successfully", product });
+        if (product) {
+            return res.status(200).send({
+                success: true,
+                message: "Product updated successfully"
+            });
+        }
+
+        return res.status(404).send({ error: "Product not found" });
+
     } catch (error) {
         return errorHandler(error, req, res);
     }
 };
 
-// Archive product (Admin)
+
+// Archive Product
 module.exports.archiveProduct = async (req, res) => {
     try {
         const product = await Product.findById(req.params.productId);
-        if (!product) return res.status(404).json({ message: "Product not found" });
+
+        if (!product) {
+            return res.status(404).send({ error: "Product not found" });
+        }
 
         if (!product.isActive) {
-            return res.status(200).json({ message: "Product already archived", product });
+            return res.status(200).send({
+                message: "Product already archived",
+                product
+            });
         }
 
         product.isActive = false;
         await product.save();
 
-        return res.status(200).json({ success: true, message: "Product archived successfully", product });
+        return res.status(200).send({
+            success: true,
+            message: "Product archived successfully",
+            product
+        });
+
     } catch (error) {
         return errorHandler(error, req, res);
     }
 };
 
-// Activate product (Admin)
+
+// Activate Product (already async)
 module.exports.activateProduct = async (req, res) => {
     try {
         const product = await Product.findById(req.params.productId);
-        if (!product) return res.status(404).json({ message: "Product not found" });
+
+        if (!product) return res.status(404).send({ error: "Product not found" });
 
         if (product.isActive) {
-            return res.status(200).json({ success: true, message: "Product already active", product });
+            return res.status(200).send({
+                success: true,
+                message: "Product already active",
+                product
+            });
         }
 
         product.isActive = true;
         await product.save();
 
-        return res.status(200).json({ success: true, message: "Product activated successfully", product });
+        return res.status(200).send({
+            success: true,
+            message: "Product activated successfully",
+            product
+        });
+
     } catch (error) {
         return errorHandler(error, req, res);
     }
 };
 
-// Search products by name
+
+// Search by name
 module.exports.searchByName = async (req, res) => {
     try {
         const keyword = req.body.name || "";
-        const results = await Product.find({ name: { $regex: keyword, $options: "i" } });
+        const results = await Product.find({
+            name: { $regex: keyword, $options: "i" }
+        });
+
         return res.status(200).json({ success: true, results });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// Search products by price
+
+// Search by price
 module.exports.searchByPrice = async (req, res) => {
     try {
         const min = Number(req.body.minPrice) || 0;
         const max = Number(req.body.maxPrice) || 999999;
 
-        const results = await Product.find({ price: { $gte: min, $lte: max } });
+        const results = await Product.find({
+            price: { $gte: min, $lte: max }
+        });
+
         return res.status(200).json({ success: true, results });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
     }
-};
+}
