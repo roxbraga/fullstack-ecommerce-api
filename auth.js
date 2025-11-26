@@ -14,22 +14,33 @@ module.exports.createAccessToken = (user) => {
 // Verify Token middleware
 module.exports.verify = (req, res, next) => {
     let token = req.headers.authorization;
-    if (!token) return res.status(401).json({ auth: "Failed. No Token" }); //  Standard 401 if no token
+
+    if (!token) {
+        return res.status(403).json({ message: "Action Forbidden" });
+    }
 
     token = token.startsWith("Bearer ") ? token.slice(7) : token;
 
     jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
-        if (err) return res.status(403).json({ auth: "Failed", message: err.message }); //  403 for invalid token
+        if (err) {
+            return res.status(403).json({ message: "Action Forbidden" });
+        }
+
         req.user = decoded;
         next();
     });
 };
 
-// // Admin check middleware
-// module.exports.verifyAdmin = (req, res, next) => {
-//     if (req.user.isAdmin) return next();
-//     return res.status(403).json({ auth: "Failed", message: "Action Forbidden" });
-// };
+
+
+// Admin check middleware
+module.exports.verifyAdmin = (req, res, next) => {
+    if (req.user.isAdmin) {
+    next();
+} else {
+    return res.status(403).json({ message: "Action Forbidden" });
+}
+};
 
 // Error handler middleware
 module.exports.errorHandler = (err, req, res, next) => {
