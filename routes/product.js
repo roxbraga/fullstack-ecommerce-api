@@ -7,7 +7,7 @@ const { verify, verifyAdmin } = require("../auth");
 router.post("/search-by-name", productController.searchByName);
 router.post("/search-by-price", productController.searchByPrice);
 
-router.get("/all", productController.getAllProducts);
+router.get("/all", verify, verifyAdmin, productController.getAllProducts);
 router.get("/active", productController.getAllActiveProducts);
 
 // Admin protected routes
