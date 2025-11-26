@@ -33,12 +33,13 @@ module.exports.addProduct = async (req, res) => {
 
 
 // Retrieve all products
-module.exports.getAllProducts = (req, res) => {
-    Product.find({})
-        .then(result => {
-            return res.status(200).send(result); 
-        })
-        .catch(error => errorHandler(error, req, res));
+module.exports.getAllProducts = async (req, res) => {
+    try {
+        const products = await Product.find({});
+        return res.status(200).json(products);
+    } catch (error) {
+        return errorHandler(error, req, res);
+    }
 };
 
 // Retrieve all active products (already async)
