@@ -28,6 +28,9 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+console.log("FRONTEND_URL >>>", process.env.FRONTEND_URL);
+
+
 // [SECTION] Database Connection
 mongoose.connect(process.env.MONGODB_STRING);
 
