@@ -1,8 +1,26 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const auth = require("../auth");
+const Cart = require('../models/Cart');
 const { errorHandler } = require('../auth'); 
 
+
+//[SECTION] Check if the email already exists
+module.exports.checkEmailExists = (req, res) => {
+    if (req.body.email.includes("@")) {
+        return User.find({ email: req.body.email })
+            .then(result => {
+                if (result.length > 0) {
+                    return res.status(409).send({ message: "Duplicate email found" });
+                } else {
+                    return res.status(200).send({ message: "No duplicate email found" });
+                }
+            })
+            .catch(error => errorHandler(error, req, res));
+    } else {
+        res.status(400).send({ message: "Invalid email format" });
+    }
+};
 
 // REGISTER USER
 module.exports.registerUser = async (req, res) => {

@@ -10,6 +10,7 @@ router.post("/login", userController.loginUser);
 // Authenticated User Routes
 router.get("/details", verify, userController.getProfile);
 router.patch("/update-password", verify, userController.updatePassword);
+router.post("/check-email", userController.checkEmailExists);
 
 // Admin Only Route
 router.patch("/:id/set-as-admin", verify, userController.setAsAdmin);

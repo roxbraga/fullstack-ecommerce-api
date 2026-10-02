@@ -2,47 +2,65 @@ const Product = require("../models/Product");
 const { errorHandler } = require('../auth');
 const auth = require("../auth");
 
+// ADMIN GUARD
+function ensureAdmin(req, res) {
+  if (!req.user || !req.user.isAdmin) {
+    res.status(403).json({ message: 'Admin access only' });
+    return false;
+  }
+  return true;
+}
 
 // Creating Product
 module.exports.addProduct = async (req, res) => {
-    try {
-        const { name, description, price } = req.body;
+     if (!ensureAdmin(req, res)) return;
 
-        const existingProduct = await Product.findOne({ name });
-        if (existingProduct) {
-            return res.status(409).send({ message: "Product already exists" });
-        }
+  try {
+    const { name, description, price, category, image, stock, isActive } = req.body;
 
-        const newProduct = new Product({
-            name,
-            description,
-            price
-        });
-
-        const result = await newProduct.save();
-
-        return res.status(201).send({
-            success: true,
-            product: result
-        });
-
-    } catch (error) {
-        return errorHandler(error, req, res);
+    if (!name || !price || !category) {
+      return res.status(400).json({
+        message: 'Name, price, and category are required'
+      });
     }
+
+    const product = new Product({
+      name,
+      description: description || '',
+      price,
+      category,
+      image: image || '',
+      stock: stock ?? 0,
+      quantity: 0,
+      isActive: isActive ?? true
+    });
+
+    await product.save();
+
+    res.status(201).json({
+      message: 'Product created successfully',
+      product
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: 'Failed to create product',
+      error: err.message
+    });
+  }
 };
 
 
 // Retrieve all products
 module.exports.getAllProducts = async (req, res) => {
-    if (!req.user?.isAdmin) {
-        return res.status(403).json({ message: "Action Forbidden" });
-    }
-    try {
-        const products = await Product.find({});
-        return res.status(200).json(products); 
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
+    if (!ensureAdmin(req, res)) return;
+
+  try {
+    //  ACTIVE ONLY
+    const products = await Product.find({ isActive: true });
+    res.status(200).json(products);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch products', error: err.message });
+  }
 };
 
 
@@ -71,63 +89,65 @@ module.exports.getProduct = async (req, res) => {
 };
 
 
+
 // Update Product info
 module.exports.updateProduct = async (req, res) => {
-    try {
-        const updatedProduct = {
-            name: req.body.name,
-            description: req.body.description,
-            price: req.body.price
-        };
+    if (!ensureAdmin(req, res)) return;
 
-        const product = await Product.findByIdAndUpdate(
-            req.params.productId,
-            updatedProduct
-        );
+  try {
+    const { id } = req.params;
+    const updates = req.body;
 
-        if (product) {
-            return res.status(200).send({
-                success: true,
-                message: "Product updated successfully"
-            });
-        }
+    const product = await Product.findByIdAndUpdate(
+      id,
+      updates,
+      { new: true, runValidators: true }
+    );
 
-        return res.status(404).send({ error: "Product not found" });
-
-    } catch (error) {
-        return errorHandler(error, req, res);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
     }
+
+    res.status(200).json({
+      message: 'Product updated successfully',
+      product
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: 'Failed to update product',
+      error: err.message
+    });
+  }
 };
 
 
 // Archive Product
 module.exports.archiveProduct = async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.productId);
+     if (!ensureAdmin(req, res)) return;
 
-        if (!product) {
-            return res.status(404).send({ error: "Product not found" });
-        }
+  try {
+    const { id } = req.params;
 
-        if (!product.isActive) {
-            return res.status(200).send({
-                message: "Product already archived",
-                product
-            });
-        }
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { isActive: false },
+      { new: true }
+    );
 
-        product.isActive = false;
-        await product.save();
-
-        return res.status(200).send({
-            success: true,
-            message: "Product archived successfully",
-            product
-        });
-
-    } catch (error) {
-        return errorHandler(error, req, res);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
     }
+
+    res.status(200).json({
+      message: 'Product archived successfully',
+      product
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: 'Failed to archive product',
+      error: err.message
+    });
+  }
 };
 
 
