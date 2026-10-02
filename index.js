@@ -18,12 +18,16 @@ const app = express();
 app.use(express.json());
 
 const corsOptions = {
-    origin: process.env.FRONTEND_URL,
+    origin: [
+        "https://fullstack-ecommerce-app-v41g.onrender.com"
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 204
 };
+
+app.use(cors(corsOptions));
 
 app.use(cors(corsOptions));
 
