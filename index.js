@@ -43,6 +43,12 @@ mongoose.connection.once("open", () => {
     console.log("Now connected to MongoDB Atlas.");
 });
 
+app.get("/", (req, res) => {
+    res.status(200).json({
+        message: "API is working!"
+    });
+});
+
 // [SECTION] Routes
 app.use("/users", userRoutes);
 app.use("/cart", cartRoutes);
