@@ -17,18 +17,23 @@ const app = express();
 
 app.use(express.json());
 
-const corsOptions = {
-    origin: [
-        "https://fullstack-ecommerce-app-v41g.onrender.com"
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 204
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//     origin: [
+//         "https://fullstack-ecommerce-app-v41g.onrender.com"
+//     ],
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     optionsSuccessStatus: 204
+// };
+// app.use(cors(corsOptions));
 
-console.log("FRONTEND_URL >>>", process.env.FRONTEND_URL);
+// console.log("FRONTEND_URL >>>", process.env.FRONTEND_URL);
+
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}))
 
 
 // [SECTION] Database Connection
