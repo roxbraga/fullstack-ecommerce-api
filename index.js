@@ -26,9 +26,6 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 204
 };
-
-app.use(cors(corsOptions));
-
 app.use(cors(corsOptions));
 
 // [SECTION] Database Connection
