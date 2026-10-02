@@ -2,49 +2,55 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const { errorHandler } = require('./auth');
+const { errorHandler } = require("./auth");
 
 const userRoutes = require("./routes/user");
 const cartRoutes = require("./routes/cart");
 const orderRoutes = require("./routes/order");
 const productRoutes = require("./routes/product");
 
-
 // [SECTION] Environment Setup
-require('dotenv').config();
-
+require("dotenv").config();
 
 // [SECTION] Server Setup
 const app = express();
+
 app.use(express.json());
 
 const corsOptions = {
     origin: process.env.FRONTEND_URL,
     credentials: true,
-    optionsSuccessStatus: 200 
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
 
-
-//[SECTION] Database Connection
+// [SECTION] Database Connection
 mongoose.connect(process.env.MONGODB_STRING);
-mongoose.connection.once('open', () => console.log('Now connected to MongoDB Atlas.'));
 
+mongoose.connection.once("open", () => {
+    console.log("Now connected to MongoDB Atlas.");
+});
+
+// [SECTION] Routes
 app.use("/users", userRoutes);
 app.use("/cart", cartRoutes);
 app.use("/orders", orderRoutes);
 app.use("/products", productRoutes);
-app.use(errorHandler);
 
+// [SECTION] Error Handler
+app.use(errorHandler);
 
 // [SECTION] Server Gateway Response
 if (require.main === module) {
     app.listen(process.env.PORT || 3000, () =>
-        console.log(`API is online on port ${process.env.PORT || 3000}`)
+        console.log(
+            `API is online on port ${process.env.PORT || 3000}`
+        )
     );
-
 }
-// Export for testing
 
+// Export for testing
 module.exports = { app, mongoose };
