@@ -59,13 +59,11 @@ app.use("/products", productRoutes);
 app.use(errorHandler);
 
 // [SECTION] Server Gateway Response
-if (require.main === module) {
-    app.listen(process.env.PORT || 3000, () =>
-        console.log(
-            `API is online on port ${process.env.PORT || 3000}`
-        )
-    );
-}
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`API is online on port ${PORT}`);
+});
 
 // Export for testing
 module.exports = { app, mongoose };
