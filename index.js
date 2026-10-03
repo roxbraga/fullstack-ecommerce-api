@@ -17,23 +17,12 @@ const app = express();
 
 app.use(express.json());
 
-// const corsOptions = {
-//     origin: [
-//         "https://fullstack-ecommerce-app-v41g.onrender.com"
-//     ],
-//     credentials: true,
-//     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//     optionsSuccessStatus: 204
-// };
-// app.use(cors(corsOptions));
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}));
 
 // console.log("FRONTEND_URL >>>", process.env.FRONTEND_URL);
-
-app.use(cors({
-    origin: "*",
-    credentials: true
-}))
 
 
 // [SECTION] Database Connection
@@ -59,11 +48,13 @@ app.use("/products", productRoutes);
 app.use(errorHandler);
 
 // [SECTION] Server Gateway Response
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`API is online on port ${PORT}`);
-});
+if (require.main === module) {
+    app.listen(process.env.PORT || 3000, () =>
+        console.log(
+            `API is online on port ${process.env.PORT || 3000}`
+        )
+    );
+}
 
 // Export for testing
 module.exports = { app, mongoose };
