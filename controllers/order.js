@@ -1,3 +1,4 @@
+const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 
@@ -15,7 +16,7 @@ module.exports.checkout = async (req, res) => {
     const products = [];
     let totalPrice = 0;
 
-    // Validate products and update stock
+    // Validate products first
     for (const item of items) {
       const product = await Product.findById(item.productId);
 
@@ -39,16 +40,6 @@ module.exports.checkout = async (req, res) => {
 
       const subtotal = product.price * item.quantity;
 
-      product.stock -= item.quantity;
-      product.totalOrders = (product.totalOrders || 0) + item.quantity;
-
-      // Automatically deactivate when out of stock
-      if (product.stock === 0) {
-        product.isActive = false;
-      }
-
-      await product.save();
-
       products.push({
         productId: product._id,
         quantity: item.quantity,
@@ -56,6 +47,22 @@ module.exports.checkout = async (req, res) => {
       });
 
       totalPrice += subtotal;
+    }
+
+    // Update stock after validation
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+
+      product.stock -= item.quantity;
+      product.totalOrders =
+        (product.totalOrders || 0) + item.quantity;
+
+      // Automatically deactivate when out of stock
+      if (product.stock === 0) {
+        product.isActive = false;
+      }
+
+      await product.save();
     }
 
     // Create order
@@ -66,7 +73,33 @@ module.exports.checkout = async (req, res) => {
       status: "Pending"
     });
 
+    // Remove checked-out products from cart
+    const cart = await Cart.findOne({
+      userId: req.user.id
+    });
+
+    if (cart) {
+      const checkedOutIds = items.map(
+        item => item.productId.toString()
+      );
+
+      cart.cartItems = cart.cartItems.filter(
+        item =>
+          !checkedOutIds.includes(
+            item.productId.toString()
+          )
+      );
+
+      cart.totalPrice = cart.cartItems.reduce(
+        (sum, item) => sum + item.subtotal,
+        0
+      );
+
+      await cart.save();
+    }
+
     return res.status(201).json(order);
+
   } catch (error) {
     console.error("Checkout error:", error);
 
@@ -77,14 +110,23 @@ module.exports.checkout = async (req, res) => {
   }
 };
 
+
 // Get logged-in user's orders
 module.exports.getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       userId: req.user.id
-    }).populate("products.productId", "name price image");
+    })
+      .populate(
+        "products.productId",
+        "name price image"
+      )
+      .sort({
+        orderedOn: -1
+      });
 
     return res.status(200).json(orders);
+
   } catch (error) {
     return res.status(500).json({
       message: "Failed to fetch orders",
@@ -92,15 +134,26 @@ module.exports.getMyOrders = async (req, res) => {
     });
   }
 };
+
 
 // Get all orders
 module.exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find({})
-      .populate("userId", "name email")
-      .populate("products.productId", "name price image");
+      .populate(
+        "userId",
+        "name email"
+      )
+      .populate(
+        "products.productId",
+        "name price image"
+      )
+      .sort({
+        orderedOn: -1
+      });
 
     return res.status(200).json(orders);
+
   } catch (error) {
     return res.status(500).json({
       message: "Failed to fetch orders",
@@ -109,10 +162,14 @@ module.exports.getAllOrders = async (req, res) => {
   }
 };
 
+
 // Delete order
 module.exports.deleteOrder = async (req, res) => {
   try {
-    const order = await Order.findByIdAndDelete(req.params.id);
+    const order =
+      await Order.findByIdAndDelete(
+        req.params.id
+      );
 
     if (!order) {
       return res.status(404).json({
@@ -124,6 +181,7 @@ module.exports.deleteOrder = async (req, res) => {
       success: true,
       message: "Order deleted successfully"
     });
+
   } catch (error) {
     return res.status(500).json({
       message: "Failed to delete order",
@@ -132,10 +190,12 @@ module.exports.deleteOrder = async (req, res) => {
   }
 };
 
+
 // Cancel order
 module.exports.cancelOrder = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order =
+      await Order.findById(req.params.id);
 
     if (!order) {
       return res.status(404).json({
@@ -143,7 +203,10 @@ module.exports.cancelOrder = async (req, res) => {
       });
     }
 
-    if (order.status === "cancelled") {
+    if (
+      order.status.toLowerCase() ===
+      "cancelled"
+    ) {
       return res.status(400).json({
         message: "Order already cancelled"
       });
@@ -151,22 +214,31 @@ module.exports.cancelOrder = async (req, res) => {
 
     // Restore product stock
     for (const item of order.products) {
-      const product = await Product.findById(item.productId);
+      const product =
+        await Product.findById(
+          item.productId
+        );
 
       if (product) {
         product.stock += item.quantity;
+
         product.isActive = true;
 
         await product.save();
       }
     }
 
-    order.status = "cancelled";
+    order.status = "Cancelled";
+
     await order.save();
 
     return res.status(200).json(order);
+
   } catch (error) {
-    console.error("Cancel order error:", error);
+    console.error(
+      "Cancel order error:",
+      error
+    );
 
     return res.status(500).json({
       message: "Failed to cancel order",
@@ -175,16 +247,31 @@ module.exports.cancelOrder = async (req, res) => {
   }
 };
 
+
 // Get draft orders
-module.exports.getDraftOrders = async (req, res) => {
+module.exports.getDraftOrders = async (
+  req,
+  res
+) => {
   try {
-    const orders = await Order.find({
-      status: "draft"
-    })
-      .populate("userId", "name email")
-      .populate("products.productId", "name price");
+    const orders =
+      await Order.find({
+        status: "Draft"
+      })
+        .populate(
+          "userId",
+          "name email"
+        )
+        .populate(
+          "products.productId",
+          "name price image"
+        )
+        .sort({
+          orderedOn: -1
+        });
 
     return res.status(200).json(orders);
+
   } catch (error) {
     return res.status(500).json({
       message: "Failed to fetch draft orders",
@@ -193,16 +280,31 @@ module.exports.getDraftOrders = async (req, res) => {
   }
 };
 
+
 // Update order status
-module.exports.updateOrderStatus = async (req, res) => {
+module.exports.updateOrderStatus = async (
+  req,
+  res
+) => {
   try {
     const { status } = req.body;
 
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const order =
+      await Order.findByIdAndUpdate(
+        req.params.id,
+        { status },
+        {
+          new: true
+        }
+      )
+        .populate(
+          "userId",
+          "name email"
+        )
+        .populate(
+          "products.productId",
+          "name price image"
+        );
 
     if (!order) {
       return res.status(404).json({
@@ -211,6 +313,7 @@ module.exports.updateOrderStatus = async (req, res) => {
     }
 
     return res.status(200).json(order);
+
   } catch (error) {
     return res.status(500).json({
       message: "Failed to update order",
@@ -219,19 +322,35 @@ module.exports.updateOrderStatus = async (req, res) => {
   }
 };
 
+
 // Get abandoned orders
-module.exports.getAbandonedOrders = async (req, res) => {
+module.exports.getAbandonedOrders = async (
+  req,
+  res
+) => {
   try {
-    const orders = await Order.find({
-      status: "abandoned"
-    })
-      .populate("userId", "name email")
-      .populate("products.productId", "name price");
+    const orders =
+      await Order.find({
+        status: "Abandoned"
+      })
+        .populate(
+          "userId",
+          "name email"
+        )
+        .populate(
+          "products.productId",
+          "name price image"
+        )
+        .sort({
+          orderedOn: -1
+        });
 
     return res.status(200).json(orders);
+
   } catch (error) {
     return res.status(500).json({
-      message: "Failed to fetch abandoned orders",
+      message:
+        "Failed to fetch abandoned orders",
       error: error.message
     });
   }
